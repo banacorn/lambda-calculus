@@ -3,18 +3,17 @@ module Named where
 open import Data.String
 open import Data.Nat hiding (_≟_)
 open import Data.Bool using (T; not)
-open import Data.Nat.Properties using (strictTotalOrder)
-open import Relation.Binary using (StrictTotalOrder)
-open import Relation.Binary.Core
+-- open import Data.Nat.Properties using (strictTotalOrder)
+-- open import Relation.Binary using (StrictTotalOrder)
+-- open import Relation.Binary.Core
 open import Relation.Nullary
 open import Data.Unit using (⊤)
-open import Function using (const)
-open import Level renaming (zero to Lzero)
+-- open import Function using (const; flip)
+-- open import Level renaming (zero to Lzero)
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 
 open import Named.Collection
-open import Data.AVL (const ⊤) betterIsStrictTotalOrder using (union)
 
 
 Variable = String
@@ -24,18 +23,33 @@ data PreTerm : Set where
     App : PreTerm → PreTerm → PreTerm
     Abs : Variable → PreTerm → PreTerm
 
+showPreTerm : PreTerm → String
+showPreTerm (Var x)   = x
+showPreTerm (App P Q) = "(" ++ showPreTerm P ++ " " ++ showPreTerm Q ++ ")"
+showPreTerm (Abs x M) = "(λ" ++ x ++ "." ++ showPreTerm M ++ ")"
+
 I : PreTerm
 I = Abs "x" (Var "x")
 
 S : PreTerm
 S = Abs "x" (App (Var "y") (Var "x"))
 
-FV : PreTerm → ⟨Set⟩
+FV : PreTerm → Collection
 FV (Var x  ) = singleton x
 FV (App f x) = union (FV f) (FV x)
 FV (Abs x m) = delete x (FV m)
 
--- neither∈ : T (not (x ∈? (A union b))) →
+open import Relation.Unary
+
+-- a = singleton "x" ∋ (elem "x" ∪ elem "y")
+
+
+-- b = C[ singleton "x" ] ∩ C[ singleton "x" ]
+
+-- M = FV S
+
+
+-- neither∈ : ∀ {x A B} → x ∉ C[ A union B ] →
 
 _[_:=_] : PreTerm → Variable → PreTerm → PreTerm
 Var x' [ x := N ] with x' ≟ x
@@ -46,8 +60,8 @@ Abs x' P [ x := N ] with x' ≟ x
 Abs x' P [ x := N ] | yes p = Abs x P
 Abs x' P [ x := N ] | no ¬p = Abs x' (P [ x := N ])
 
-lem-1-2-5-a : (M : PreTerm) → (x : Variable) → (N : PreTerm) → T (not (x ∈? FV M)) → M [ x := N ] ≡ M
-lem-1-2-5-a (Var y)   x N x∉M = {!   !}
+lem-1-2-5-a : (M : PreTerm) → (x : Variable) → (N : PreTerm) → x ∈c FV M → M [ x := N ] ≡ M
+lem-1-2-5-a (Var y)   x N x∉M = {! x ∈v N  !}
 lem-1-2-5-a (App P Q) x N x∉M =
     begin
         App (P [ x := N ]) (Q [ x := N ])
@@ -56,14 +70,13 @@ lem-1-2-5-a (App P Q) x N x∉M =
     ≡⟨ {!   !} ⟩
         App P Q
     ∎
-
 lem-1-2-5-a (Abs y M) x N x∉M = {!   !}
 
 
 lem-1-2-5-c : (M : PreTerm) → (x : Variable) → M [ x := Var x ] ≡ M
-lem-1-2-5-c (Var x)   y with x ≟ y
-lem-1-2-5-c (Var x) y | yes p = sym (cong Var p)
-lem-1-2-5-c (Var x) y | no ¬p = refl
+lem-1-2-5-c (Var x  ) y with x ≟ y
+lem-1-2-5-c (Var x  ) y | yes p = sym (cong Var p)
+lem-1-2-5-c (Var x  ) y | no ¬p = refl
 lem-1-2-5-c (App P Q) y = cong₂ App (lem-1-2-5-c P y) (lem-1-2-5-c Q y)
 lem-1-2-5-c (Abs x M) y  with x ≟ y
 lem-1-2-5-c (Abs x M) y | yes p = cong (λ w → Abs w M) (sym p)
