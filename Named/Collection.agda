@@ -6,7 +6,7 @@ open import Data.Sum renaming (map to mapSum)
 open import Data.String
 open import Data.Bool using (Bool; true; false; T; not)
 open import Level renaming (zero to lvl0)
-open import Function
+open import Function using (_∘_; id; flip)
 open import Function.Equivalence using (_⇔_)
 open import Relation.Nullary
 open import Relation.Nullary.Negation
@@ -17,29 +17,54 @@ open import Relation.Binary.PropositionalEquality as PropEq using (_≡_; _≢_;
 Collection : Set
 Collection = List String
 
-infix 4 _∈c_
+infix 4 _∈_ _∉_ _∋_ _∌_
 
-data _∈c_ : REL String Collection lvl0 where
-    here  : ∀ {   x A}         → x ∈c x ∷ A
-    there : ∀ {a x A} → x ∈c A → x ∈c a ∷ A
+data _∈_ : REL String Collection lvl0 where
+    here  : ∀ {   x A}         → x ∈ x ∷ A
+    there : ∀ {a x A} → x ∈ A → x ∈ a ∷ A
 
-_∉c_ : REL String Collection _
-x ∉c A = ¬ x ∈c A
+_∉_ : REL String Collection _
+x ∉ A = ¬ x ∈ A
 
+_∋_ : REL Collection String _
+_∋_ = flip _∈_
 
--- here-repects-≡ : ∀ {P} → (λ x → x ∈c P) Respects _≡_
-here-repects-≡ : ∀ {x a A} → x ≡ a → x ∈c a ∷ A → a ∈c a ∷ A
+_∌_ : REL Collection String _
+_∌_ = flip _∉_
+
+here-repects-≡ : ∀ {A} → (λ x → x ∈ A) Respects _≡_
 here-repects-≡ refl = id
 
-there⁻¹ : ∀ {x a A} → x ≢ a → x ∈c a ∷ A → x ∈c A
-there⁻¹ x≢a here            = contradiction refl x≢a
-there⁻¹ x≢a (there x∈a∷A) = x∈a∷A
+there-repects-≡ : ∀ {x A} → (λ a → x ∈ a ∷ A) Respects _≡_
+there-repects-≡ refl = id
 
-_∈?_ : (x : String) → (A : Collection) → Dec (x ∈c A)
+there-if-not-here : ∀ {x a A} → x ≢ a → x ∈ a ∷ A → x ∈ A
+there-if-not-here x≢a here          = contradiction refl x≢a
+there-if-not-here x≢a (there x∈a∷A) = x∈a∷A
+
+here-if-not-there : ∀ {x a A} → x ∉ A → x ∈ a ∷ A → x ≡ a
+here-if-not-there x∉A here = refl
+here-if-not-there x∉A (there x∈A) = contradiction x∈A x∉A
+
+map-∈ : ∀ {x a A B} → (x ∈ A → x ∈ B) → x ∈ a ∷ A → x ∈ a ∷ B
+map-∈ f here = here
+map-∈ f (there x∈a∷A) = there (f x∈a∷A)
+
+map-∉ : ∀ {x a A B} → (x ∉ A → x ∉ B) → x ≢ a → x ∉ a ∷ A → x ∉ a ∷ B
+map-∉ f x≢x x∉a∷A here = contradiction refl x≢x
+map-∉ f x≢a x∉a∷A (there x∈B) = f (x∉a∷A ∘ there) x∈B
+
+still-not-there : ∀ {x y} A → x ≢ y → x ∉ A → x ∉ y ∷ A
+still-not-there [] x≢y x∉[y] here = x≢y refl
+still-not-there [] x≢y x∉[y] (there ())
+still-not-there (a ∷ A) x≢y x∉a∷A here = x≢y refl
+still-not-there (a ∷ A) x≢y x∉a∷A (there x∈a∷A) = x∉a∷A x∈a∷A
+
+_∈?_ : (x : String) → (A : Collection) → Dec (x ∈ A)
 x ∈? [] = no (λ ())
 x ∈? (a ∷ A) with x ≟ a
 x ∈? (.x ∷ A) | yes refl = yes here
-x ∈? (a ∷ A) | no ¬p = mapDec′ there (there⁻¹ ¬p) (x ∈? A)
+x ∈? (a ∷ A) | no ¬p = mapDec′ there (there-if-not-here ¬p) (x ∈? A)
 
 union : Collection → Collection → Collection
 union []      B = B
@@ -47,13 +72,13 @@ union (a ∷ A) B with a ∈? B
 union (a ∷ A) B | yes p = union A B
 union (a ∷ A) B | no ¬p = a ∷ union A B
 
-in-right-union : ∀ {x} A B → x ∈c B → x ∈c union A B
+in-right-union : ∀ {x} A B → x ∈ B → x ∈ union A B
 in-right-union []      B x∈B = x∈B
 in-right-union (a ∷ A) B x∈B with a ∈? B
 in-right-union (a ∷ A) B x∈B | yes p = in-right-union A B x∈B
 in-right-union (a ∷ A) B x∈B | no ¬p = there (in-right-union A B x∈B)
 
-in-left-union : ∀ {x} A B → x ∈c A → x ∈c union A B
+in-left-union : ∀ {x} A B → x ∈ A → x ∈ union A B
 in-left-union []      B ()
 in-left-union (a ∷ A) B x∈A         with a ∈? B
 in-left-union (a ∷ A) B here        | yes p = in-right-union A B p
@@ -61,132 +86,63 @@ in-left-union (a ∷ A) B (there x∈A) | yes p = in-left-union A B x∈A
 in-left-union (a ∷ A) B here        | no ¬p = here
 in-left-union (a ∷ A) B (there x∈A) | no ¬p = there (in-left-union A B x∈A)
 
-in-either : ∀ {x} A B → x ∈c union A B → x ∈c A ⊎ x ∈c B
+in-either : ∀ {x} A B → x ∈ union A B → x ∈ A ⊎ x ∈ B
 in-either []      B x∈A∪B         = inj₂ x∈A∪B
 in-either (a ∷ A) B x∈A∪B         with a ∈? B
 in-either (a ∷ A) B x∈A∪B         | yes p = mapSum there id (in-either A B x∈A∪B)
 in-either (a ∷ A) B here          | no ¬p = inj₁ here
 in-either (a ∷ A) B (there x∈A∪B) | no ¬p = mapSum there id (in-either A B x∈A∪B)
 
-union-branch-1 : ∀ {x a} A B → a ∈c B → x ∈c union (a ∷ A) B → x ∈c union A B
+union-branch-1 : ∀ {x a} A B → a ∈ B → x ∈ union (a ∷ A) B → x ∈ union A B
 union-branch-1 {x} {a} A B a∈B x∈union with a ∈? B
 union-branch-1 A B a∈B x∈union | yes p = x∈union
 union-branch-1 A B a∈B x∈union | no ¬p = contradiction a∈B ¬p
 
-there-left-union-coherence : ∀ {x} {a} A B → x ∈c a ∷ A → x ∈c a ∷ union A B
+there-left-union-coherence : ∀ {x} {a} A B → x ∈ a ∷ A → x ∈ a ∷ union A B
 there-left-union-coherence A B here          = here
 there-left-union-coherence A B (there x∈a∷A) = there (in-left-union A B x∈a∷A)
 
 
-in-neither : ∀ {x} A B → x ∉c union A B → x ∉c A × x ∉c B
+in-neither : ∀ {x} A B → x ∉ union A B → x ∉ A × x ∉ B
 in-neither []      B x∉A∪B = (λ ()) , x∉A∪B
 in-neither (a ∷ A) B x∉A∪B with a ∈? B
 in-neither (a ∷ A) B x∉A∪B | yes a∈B = (contraposition (union-branch-1 A B a∈B ∘ in-left-union (a ∷ A) B) x∉A∪B) , (contraposition (in-right-union A B) x∉A∪B)
 in-neither (a ∷ A) B x∉A∪B | no a∉B = (contraposition (there-left-union-coherence A B) x∉A∪B) , contraposition (there ∘ in-right-union A B) x∉A∪B
 
 singleton : String → Collection
-singleton s = s ∷ []
+singleton x = x ∷ []
 
 delete : String → Collection → Collection
-delete s [] = []
-delete s (x ∷ A) with s ∈? A
-delete s (x ∷ A) | yes p = x ∷ A
-delete s (x ∷ A) | no ¬p = s ∷ delete x A
+delete x [] = []
+delete x (a ∷ A) with x ≟ a
+delete x (a ∷ A) | yes p =     delete x A -- keep deleting, because there might be many of them
+delete x (a ∷ A) | no ¬p = a ∷ delete x A
+
+∉-after-deleted : ∀ x A → x ∉ delete x A
+∉-after-deleted x [] ()
+∉-after-deleted x (a ∷ A) with x ≟ a
+∉-after-deleted x (a ∷ A) | yes p = ∉-after-deleted x A
+∉-after-deleted x (a ∷ A) | no ¬p = still-not-there (delete x A) ¬p (∉-after-deleted x A)
 
 
---
--- nub : Collection → Collection
--- nub [] = []
--- nub (x ∷ A) with any (_==_ x) A
--- nub (x ∷ A) | true = A
--- nub (x ∷ A) | false = x ∷ A
---
--- -- union : Collection → Collection → Collection
--- -- union []       B = B
--- -- union (x ∷ A) [] = x ∷ A
--- -- union (x ∷ A) (y ∷ B) with x ∈c (y ∷ B)
--- -- ... | here = {! z  !}
--- -- union (x ∷ A) B | true  = union A B
--- -- union (x ∷ A) B | false = x ∷ union A B
---
---
--- -- intersection : Collection → Collection → Collection
--- -- intersection [] B = []
--- -- intersection (x ∷ A) B with any (_==_ x) B
--- -- intersection (x ∷ A) B | true = x ∷ intersection A B
--- -- intersection (x ∷ A) B | false = intersection A B
--- --
--- -- delete : String → Collection → Collection
--- -- delete s [] = []
--- -- delete s (x ∷ A) with s == x
--- -- delete s (x ∷ A) | true = A
--- -- delete s (x ∷ A) | false = x ∷ delete s A
--- --
--- -- union-right-identity : ∀ P → union P [] ≡ P
--- -- union-right-identity [] = refl
--- -- union-right-identity (x ∷ P) = cong (_∷_ x) (union-right-identity P)
--- --
--- --
--- --
--- --
--- -- trans-∉c : ∀ {x} P Q → P ≡ Q → x ∉c P → x ∉c Q
--- -- trans-∉c P .P refl x∉P x∈Q = x∉P x∈Q
--- --
--- -- a : "a" ∈c ("haha" ∷ "a" ∷ [])
--- -- a = there here
--- --
--- -- b : ¬ ("b" ∈c ("haha" ∷ "a" ∷ []))
--- -- b (there (there ()))
--- --
--- -- -- lem : ∀ {x} P Q → x ∉c (union (p ∷ P) (q ∷ Q)) → x ∉c (p ∷ P)
--- -- -- lem
--- --
--- -- -- lem : ∀ {x q} P Q → x ∈c union P (q ∷ Q) → x ∈c (p ∷ P)
--- -- -- lem P Q x∈union = ?
--- --
--- --
--- -- in-both : ∀ {x} P Q → x ∈c union P Q → x ∈c P ⊎ x ∈c Q
--- -- in-both []      Q       x∈union = inj₂ x∈union
--- -- in-both (p ∷ P) []      x∈union = inj₁ (subst-coll-∈c (union (p ∷ P) []) (p ∷ P) (union-right-identity (p ∷ P)) x∈union)
--- -- in-both (p ∷ P) (q ∷ Q) x∈union with any (_==_ p) (q ∷ Q)
--- -- in-both (p ∷ P) (q ∷ Q) x∈union | true = {!   !}
--- -- in-both (p ∷ P) (q ∷ Q) x∈union | false = {!   !}
--- --
--- -- in-neither : ∀ x P Q → x ∉c union P Q → x ∉c P × x ∉c Q
--- -- in-neither x []       Q      x∉union = (λ ()) , x∉union
--- -- in-neither x (p ∷ P) []      x∉union = trans-∉c (p ∷ union P []) (p ∷ P) (union-right-identity (p ∷ P)) x∉union , (λ ())
--- -- in-neither x (p ∷ P) (q ∷ Q) x∉union with any (_==_ p) (q ∷ Q)
--- -- in-neither x (p ∷ P) (q ∷ Q) x∉union | true = {!   !} , {!   !}
--- -- in-neither x (p ∷ P) (q ∷ Q) x∉union | false = {!   !} , {!   !}
--- --
--- -- -- = trans-∉c {!   !} {!   !} {!   !} x∉union , {!   !}
--- --
--- -- -- _∈c_ : String → Collection → Set
--- -- -- s ∈c [] = ⊥
--- -- -- s ∈c (x ∷ A) with s == x
--- -- -- s ∈c (x ∷ A) | true = ⊤
--- -- -- s ∈c (x ∷ A) | false = s ∈c A
--- -- --
--- -- -- has : Collection → Pred String _
--- -- -- has = flip _∈c_
--- -- --
--- -- -- of : Pred Collection _
--- -- -- of = λ x → (λ s → {!   !}) {!   !}
--- -- --
--- -- --
--- -- -- in-both : ∀ {x P Q} → x ∈ c[ intersection P Q ] → x ∈ c[ P ] × x ∈ c[ Q ]
--- -- -- in-both {x} {P} {Q} x∈intersection = {!   !} , {!   !}
--- -- --
--- -- -- -- in-neither : ∀ {x P Q} → x ∉ c[ union P Q ] → x ∉ c[ P ] × x ∉ c[ Q ]
--- -- -- -- in-neither {x} {P} {Q} x∉union = contradiction {!   !} x∉union , {!   !}
--- -- --
--- -- -- --
--- -- -- _∈?_ : String → Collection → Bool
--- -- -- s ∈? [] = false
--- -- -- s ∈? (x ∷ A) with s == x
--- -- -- s ∈? (x ∷ A) | true = true
--- -- -- s ∈? (x ∷ A) | false = s ∈? A
--- -- --
--- -- --
--- -- -- -- in-neither : ∀ {x P Q} → T (not (x ∈? union P Q)) → T (not (x ∈? P)) × T (not (x ∈? Q))
--- -- -- -- in-neither x∉union = {!  !}
+still-∈-after-deleted : ∀ {x} y A → x ≢ y → x ∈ A → x ∈ delete y A
+still-∈-after-deleted y []       x≢y ()
+still-∈-after-deleted y (a  ∷ A) x≢y x∈A with y ≟ a
+still-∈-after-deleted y (.y ∷ A) x≢y x∈A | yes refl = still-∈-after-deleted y A x≢y (there-if-not-here x≢y x∈A)
+still-∈-after-deleted y (a  ∷ A) x≢y x∈A | no ¬p    = map-∈ (still-∈-after-deleted y A x≢y) x∈A
+
+still-∉-after-deleted : ∀ {x} y A → x ≢ y → x ∉ A → x ∉ delete y A
+still-∉-after-deleted y []       x≢y x∉A = x∉A
+still-∉-after-deleted y (a  ∷ A) x≢y x∉A with y ≟ a
+still-∉-after-deleted y (.y ∷ A) x≢y x∉A | yes refl = still-∉-after-deleted y A x≢y (x∉A ∘ there)
+still-∉-after-deleted {x} y (a  ∷ A) x≢y x∉A | (no ¬p) with x ≟ a
+still-∉-after-deleted y (x ∷ A) x≢y x∉A | no ¬p | yes refl = contradiction here x∉A
+still-∉-after-deleted y (a ∷ A) x≢y x∉A | no ¬p | no ¬q = map-∉ (still-∉-after-deleted y A x≢y) ¬q x∉A
+
+still-∉-after-recovered : ∀ {x} y A → x ≢ y → x ∉ delete y A → x ∉ A
+still-∉-after-recovered     y []      x≢y x∉deleted ()
+still-∉-after-recovered     y (a  ∷ A) x≢y x∉deleted x∈a∷A with y ≟ a
+still-∉-after-recovered     y (.y ∷ A) x≢y x∉deleted x∈a∷A | yes refl = still-∉-after-recovered y A x≢y x∉deleted (there-if-not-here x≢y x∈a∷A)
+still-∉-after-recovered {x} y (a  ∷ A) x≢y x∉deleted x∈a∷A | no ¬p with x ≟ a
+still-∉-after-recovered     y (x  ∷ A) x≢y x∉deleted x∈a∷A | no ¬p | yes refl = contradiction here x∉deleted
+still-∉-after-recovered     y (a  ∷ A) x≢y x∉deleted x∈a∷A | no ¬p | no ¬q = x∉deleted (map-∈ (still-∈-after-deleted y A x≢y) x∈a∷A)

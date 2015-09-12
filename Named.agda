@@ -10,7 +10,7 @@ open import Data.Product
 open import Relation.Nullary
 open import Relation.Nullary.Negation
 open import Data.Unit using (⊤)
--- open import Function using (const; flip)
+open import Function using (_∘_)
 -- open import Level renaming (zero to Lzero)
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
@@ -41,8 +41,6 @@ FV (Var x  ) = singleton x
 FV (App f x) = union (FV f) (FV x)
 FV (Abs x m) = delete x (FV m)
 
-open import Relation.Unary
-
 -- a = singleton "x" ∋ (elem "x" ∪ elem "y")
 
 
@@ -54,23 +52,23 @@ open import Relation.Unary
 -- neither∈ : ∀ {x A B} → x ∉ C[ A union B ] →
 
 _[_≔_] : PreTerm → Variable → PreTerm → PreTerm
-Var x' [ x ≔ N ] with x' ≟ x
-Var x' [ x ≔ N ] | yes p = N
-Var x' [ x ≔ N ] | no ¬p = Var x'
-App P Q [ x ≔ N ] = App (P [ x ≔ N ]) (Q [ x ≔ N ])
-Abs x' P [ x ≔ N ] with x' ≟ x
-Abs x' P [ x ≔ N ] | yes p = Abs x P
-Abs x' P [ x ≔ N ] | no ¬p = Abs x' (P [ x ≔ N ])
+Var x [ v ≔ N ] with x ≟ v
+Var x [ v ≔ N ] | yes p = N
+Var x [ v ≔ N ] | no ¬p = Var x
+App P Q [ v ≔ N ] = App (P [ v ≔ N ]) (Q [ v ≔ N ])
+Abs x P [ v ≔ N ] with x ≟ v
+Abs x P [ v ≔ N ] | yes p = Abs v P
+Abs x P [ v ≔ N ] | no ¬p = Abs x (P [ v ≔ N ])
 
--- If x ∉ FV(M) then M[x≔N] is defined and M[x≔N] ≡ M
-lem-1-2-5-a : ∀ M N x → x ∉c FV M → M [ x ≔ N ] ≡ M
-lem-1-2-5-a (Var y) N x x∉M with y ≟ x
-lem-1-2-5-a (Var y) N .y x∉M | yes refl = contradiction here x∉M
-lem-1-2-5-a (Var y) N x x∉M | no ¬p = refl
-lem-1-2-5-a (App P Q) N x x∉M = cong₂ App (lem-1-2-5-a P N x (proj₁ (in-neither (FV P) (FV Q) x∉M))) (lem-1-2-5-a Q N x (proj₂ (in-neither (FV P) (FV Q) x∉M)))
-lem-1-2-5-a (Abs y M) N x x∉M with y ≟ x
-lem-1-2-5-a (Abs y M) N x x∉M | yes p = sym (cong (λ z → Abs z M) p)
-lem-1-2-5-a (Abs y M) N x x∉M | no ¬p = cong (Abs y) (lem-1-2-5-a M N x {!   !})
+-- If v ∉ FV(M) then M[v≔N] is defined and M[v≔N] ≡ M
+lem-1-2-5-a : ∀ M N v → v ∉ FV M → M [ v ≔ N ] ≡ M
+lem-1-2-5-a (Var x) N v v∉M with x ≟ v
+lem-1-2-5-a (Var x) N .x v∉M | yes refl = contradiction here v∉M
+lem-1-2-5-a (Var x) N v v∉M | no ¬p = refl
+lem-1-2-5-a (App P Q) N v v∉M = cong₂ App (lem-1-2-5-a P N v (proj₁ (in-neither (FV P) (FV Q) v∉M))) (lem-1-2-5-a Q N v (proj₂ (in-neither (FV P) (FV Q) v∉M)))
+lem-1-2-5-a (Abs x M) N v v∉M with x ≟ v
+lem-1-2-5-a (Abs x M) N v v∉M | yes p = cong (λ z → Abs z M) (sym p)
+lem-1-2-5-a (Abs x M) N v v∉M | no ¬p = cong (Abs x) (lem-1-2-5-a M N v (still-∉-after-recovered x (FV M) (¬p ∘ sym) v∉M))
 
 
 -- begin
