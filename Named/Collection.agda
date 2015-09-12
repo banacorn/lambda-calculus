@@ -20,38 +20,32 @@ Collection = List String
 infix 4 _∈c_
 
 data _∈c_ : REL String Collection lvl0 where
-    here  : ∀ {   x xs}           → x ∈c x ∷ xs
-    there : ∀ {x' x xs} → x ∈c xs → x ∈c x' ∷ xs
+    here  : ∀ {   x A}         → x ∈c x ∷ A
+    there : ∀ {a x A} → x ∈c A → x ∈c a ∷ A
 
 _∉c_ : REL String Collection _
-x ∉c xs = ¬ x ∈c xs
+x ∉c A = ¬ x ∈c A
 
--- data _⊆c_ : Rel Collection lvl0 where
---     reflex : ∀ {xs}   → xs ⊆c xs
---     extend : ∀ {xs x} → xs ⊆c x ∷ xs
---
--- _⊈c_ : Rel Collection _
--- x ⊈c xs = ¬ x ⊆c xs
 
 -- here-repects-≡ : ∀ {P} → (λ x → x ∈c P) Respects _≡_
-here-repects-≡ : ∀ {s x xs} → s ≡ x → s ∈c s ∷ xs → s ∈c x ∷ xs
+here-repects-≡ : ∀ {x a A} → x ≡ a → x ∈c a ∷ A → a ∈c a ∷ A
 here-repects-≡ refl = id
 
-there⁻¹ : ∀ {s x xs} → s ≢ x → s ∈c x ∷ xs → s ∈c xs
-there⁻¹ s≢x here            = contradiction refl s≢x
-there⁻¹ s≢x (there s∈x∷xs) = s∈x∷xs
+there⁻¹ : ∀ {x a A} → x ≢ a → x ∈c a ∷ A → x ∈c A
+there⁻¹ x≢a here            = contradiction refl x≢a
+there⁻¹ x≢a (there x∈a∷A) = x∈a∷A
 
-_∈?_ : (s : String) → (xs : Collection) → Dec (s ∈c xs)
-s ∈? [] = no (λ ())
-s ∈? (x ∷ xs) with s ≟ x
-s ∈? (.s ∷ xs) | yes refl = yes here
-s ∈? (x ∷ xs) | no ¬p = mapDec′ there (there⁻¹ ¬p) (s ∈? xs)
+_∈?_ : (x : String) → (A : Collection) → Dec (x ∈c A)
+x ∈? [] = no (λ ())
+x ∈? (a ∷ A) with x ≟ a
+x ∈? (.x ∷ A) | yes refl = yes here
+x ∈? (a ∷ A) | no ¬p = mapDec′ there (there⁻¹ ¬p) (x ∈? A)
 
 union : Collection → Collection → Collection
-union [] ys = ys
-union (x ∷ xs) ys with x ∈? ys
-union (x ∷ xs) ys | yes p = union xs ys
-union (x ∷ xs) ys | no ¬p = x ∷ union xs ys
+union []      B = B
+union (a ∷ A) B with a ∈? B
+union (a ∷ A) B | yes p = union A B
+union (a ∷ A) B | no ¬p = a ∷ union A B
 
 in-right-union : ∀ {x} A B → x ∈c B → x ∈c union A B
 in-right-union []      B x∈B = x∈B
@@ -90,35 +84,43 @@ in-neither (a ∷ A) B x∉A∪B with a ∈? B
 in-neither (a ∷ A) B x∉A∪B | yes a∈B = (contraposition (union-branch-1 A B a∈B ∘ in-left-union (a ∷ A) B) x∉A∪B) , (contraposition (in-right-union A B) x∉A∪B)
 in-neither (a ∷ A) B x∉A∪B | no a∉B = (contraposition (there-left-union-coherence A B) x∉A∪B) , contraposition (there ∘ in-right-union A B) x∉A∪B
 
--- singleton : String → Collection
--- singleton s = s ∷ []
+singleton : String → Collection
+singleton s = s ∷ []
+
+delete : String → Collection → Collection
+delete s [] = []
+delete s (x ∷ A) with s ∈? A
+delete s (x ∷ A) | yes p = x ∷ A
+delete s (x ∷ A) | no ¬p = s ∷ delete x A
+
+
 --
 -- nub : Collection → Collection
 -- nub [] = []
--- nub (x ∷ xs) with any (_==_ x) xs
--- nub (x ∷ xs) | true = xs
--- nub (x ∷ xs) | false = x ∷ xs
+-- nub (x ∷ A) with any (_==_ x) A
+-- nub (x ∷ A) | true = A
+-- nub (x ∷ A) | false = x ∷ A
 --
 -- -- union : Collection → Collection → Collection
--- -- union []       ys = ys
--- -- union (x ∷ xs) [] = x ∷ xs
--- -- union (x ∷ xs) (y ∷ ys) with x ∈c (y ∷ ys)
+-- -- union []       B = B
+-- -- union (x ∷ A) [] = x ∷ A
+-- -- union (x ∷ A) (y ∷ B) with x ∈c (y ∷ B)
 -- -- ... | here = {! z  !}
--- -- union (x ∷ xs) ys | true  = union xs ys
--- -- union (x ∷ xs) ys | false = x ∷ union xs ys
+-- -- union (x ∷ A) B | true  = union A B
+-- -- union (x ∷ A) B | false = x ∷ union A B
 --
 --
 -- -- intersection : Collection → Collection → Collection
--- -- intersection [] ys = []
--- -- intersection (x ∷ xs) ys with any (_==_ x) ys
--- -- intersection (x ∷ xs) ys | true = x ∷ intersection xs ys
--- -- intersection (x ∷ xs) ys | false = intersection xs ys
+-- -- intersection [] B = []
+-- -- intersection (x ∷ A) B with any (_==_ x) B
+-- -- intersection (x ∷ A) B | true = x ∷ intersection A B
+-- -- intersection (x ∷ A) B | false = intersection A B
 -- --
 -- -- delete : String → Collection → Collection
 -- -- delete s [] = []
--- -- delete s (x ∷ xs) with s == x
--- -- delete s (x ∷ xs) | true = xs
--- -- delete s (x ∷ xs) | false = x ∷ delete s xs
+-- -- delete s (x ∷ A) with s == x
+-- -- delete s (x ∷ A) | true = A
+-- -- delete s (x ∷ A) | false = x ∷ delete s A
 -- --
 -- -- union-right-identity : ∀ P → union P [] ≡ P
 -- -- union-right-identity [] = refl
@@ -161,9 +163,9 @@ in-neither (a ∷ A) B x∉A∪B | no a∉B = (contraposition (there-left-union-
 -- --
 -- -- -- _∈c_ : String → Collection → Set
 -- -- -- s ∈c [] = ⊥
--- -- -- s ∈c (x ∷ xs) with s == x
--- -- -- s ∈c (x ∷ xs) | true = ⊤
--- -- -- s ∈c (x ∷ xs) | false = s ∈c xs
+-- -- -- s ∈c (x ∷ A) with s == x
+-- -- -- s ∈c (x ∷ A) | true = ⊤
+-- -- -- s ∈c (x ∷ A) | false = s ∈c A
 -- -- --
 -- -- -- has : Collection → Pred String _
 -- -- -- has = flip _∈c_
@@ -181,9 +183,9 @@ in-neither (a ∷ A) B x∉A∪B | no a∉B = (contraposition (there-left-union-
 -- -- -- --
 -- -- -- _∈?_ : String → Collection → Bool
 -- -- -- s ∈? [] = false
--- -- -- s ∈? (x ∷ xs) with s == x
--- -- -- s ∈? (x ∷ xs) | true = true
--- -- -- s ∈? (x ∷ xs) | false = s ∈? xs
+-- -- -- s ∈? (x ∷ A) with s == x
+-- -- -- s ∈? (x ∷ A) | true = true
+-- -- -- s ∈? (x ∷ A) | false = s ∈? A
 -- -- --
 -- -- --
 -- -- -- -- in-neither : ∀ {x P Q} → T (not (x ∈? union P Q)) → T (not (x ∈? P)) × T (not (x ∈? Q))
