@@ -4,10 +4,12 @@ open import Data.String
 open import Data.Nat hiding (_≟_)
 open import Data.Bool using (T; not)
 open import Data.Product
+open import Data.Sum
 -- open import Data.Nat.Properties using (strictTotalOrder)
 -- open import Relation.Binary using (StrictTotalOrder)
 -- open import Relation.Binary.Core
 open import Relation.Nullary
+open import Relation.Unary
 open import Relation.Nullary.Negation
 open import Data.Unit using (⊤)
 open import Function using (_∘_)
@@ -21,9 +23,9 @@ open import Named.Collection
 Variable = String
 
 data PreTerm : Set where
-    Var : Variable → PreTerm
-    App : PreTerm → PreTerm → PreTerm
-    Abs : Variable → PreTerm → PreTerm
+    Var : (w : Variable) → PreTerm
+    App : (P : PreTerm) → (Q : PreTerm) → PreTerm
+    Abs : (w : Variable) → (Q : PreTerm) → PreTerm
 
 showPreTerm : PreTerm → String
 showPreTerm (Var x)   = x
@@ -61,7 +63,7 @@ Abs x P [ v ≔ N ] | yes p = Abs v P
 Abs x P [ v ≔ N ] | no ¬p = Abs x (P [ v ≔ N ])
 
 -- If v ∉ FV(M) then M[v≔N] is defined and M[v≔N] ≡ M
-lem-1-2-5-a : ∀ M N v → v ∉ FV M → M [ v ≔ N ] ≡ M
+lem-1-2-5-a : ∀ M N v → v ∉ c[ FV M ] → M [ v ≔ N ] ≡ M
 lem-1-2-5-a (Var x) N v v∉M with x ≟ v
 lem-1-2-5-a (Var x) N .x v∉M | yes refl = contradiction here v∉M
 lem-1-2-5-a (Var x) N v v∉M | no ¬p = refl
@@ -78,6 +80,52 @@ lem-1-2-5-a (Abs x M) N v v∉M | no ¬p = cong (Abs x) (lem-1-2-5-a M N v (stil
 -- ≡⟨ {!   !} ⟩
 --     {!   !}
 -- ∎
+
+-- If M[v≔N] is defined, v ≠ x and x ∈ FV(M) then x ∈ FV(M[v≔N])
+-- lem-1-2-5-b-i : ∀ {x v N} M → v ≢ x → (x ∈ FV M) ≡ (x ∈ FV (M [ v ≔ N ]))
+lem-1-2-5-b-i : ∀ {x v N} M → v ≢ x → (x ∈ c[ FV M ]) ≡ (x ∈ c[ FV (M [ v ≔ N ]) ])
+lem-1-2-5-b-i {v = v} (Var w) v≢x with w ≟ v
+lem-1-2-5-b-i (Var v) v≢x | yes refl = {!   !}
+lem-1-2-5-b-i {x} (Var w) v≢x | no ¬p = refl -- cong (_∈_ x) refl
+lem-1-2-5-b-i {x} {v} {N} (App P Q) v≢x =
+    begin
+        x ∈ c[ union (FV P) (FV Q) ]
+    ≡⟨ {!   !} ⟩
+        {!   !}
+    ≡⟨ {!   !} ⟩
+        {!   !}
+    ≡⟨ {!   !} ⟩
+        {!   !}
+    ≡⟨ {!   !} ⟩
+        {!   !}
+    ≡⟨ {!   !} ⟩
+        x ∈ c[ union (FV (P [ v ≔ N ])) (FV (Q [ v ≔ N ])) ]
+    ∎
+lem-1-2-5-b-i (Abs w P) v≢x = {!    !}
+-- lem-1-2-5-b-i {v = v} (Var w) v≢x x∈FV-M with w ≟ v
+-- lem-1-2-5-b-i (Var w)   v≢x x∈FV-M | yes p = ? -- contradiction (trans (singleton-≡ x∈FV-M) p) (v≢x ∘ sym)
+-- lem-1-2-5-b-i (Var w)   v≢x x∈FV-M | no ¬p = ? -- x∈FV-M
+-- lem-1-2-5-b-i (App P Q) v≢x x∈FV-M = ? -- ∈-respects-≡ {!   !} x∈FV-M
+-- lem-1-2-5-b-i (App P Q) v≢x x∈FV-M = ∈-respects-≡ (cong₂ union (cong FV {!   !}) (cong FV {!    !})) x∈FV-M
+-- lem-1-2-5-b-i (App P Q) v≢x x∈FV-M = ∈-respects-≡ (cong₂ union ({!   !}) {!   !}) x∈FV-M
+-- lem-1-2-5-b-i (Abs w P) v≢x x∈FV-M = {!   !}
+
+
+-- If M[v≔N] is defined then y ∈ FV(M[v≔N]) iff either y ∈ FV(M) and v ≠ y
+-- or y ∈ FV(N) and x ∈ FV(M)
+
+
+
+-- lem-1-2-5-b-i : ∀ {x y N} M v →  y ∈ FV (M [ v ≔ N ]) → y ∈ FV M × x ≢ y ⊎ y ∈ FV N × x ∈ FV M
+-- lem-1-2-5-b⇒ (Var w) v y∈Applied with w ≟ v
+-- lem-1-2-5-b⇒ (Var w) v y∈Applied | yes p = {!   !}
+-- lem-1-2-5-b⇒ (Var w) v y∈Applied | no ¬p = inj₁ (y∈Applied , {! singleton-≡ ∈  !})
+-- lem-1-2-5-b⇒ (App P Q) v y∈Applied = {!   !}
+-- lem-1-2-5-b⇒ (Abs w P) v y∈Applied = {!   !}
+--
+-- lem-1-2-5-b⇐ : ∀ {x y v M N} → y ∈ FV M × x ≢ y ⊎ y ∈ FV N × x ∈ FV M → y ∈ FV (M [ v ≔ N ])
+-- lem-1-2-5-b⇐ = {!   !}
+
 
 lem-1-2-5-c : (M : PreTerm) → (x : Variable) → M [ x ≔ Var x ] ≡ M
 lem-1-2-5-c (Var x  ) y with x ≟ y
