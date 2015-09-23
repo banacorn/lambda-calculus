@@ -1,20 +1,21 @@
 module Named.Collection where
 
 open import Data.List
-open import Data.String
+open import Data.String hiding (setoid)
 open import Data.List using ([]; _∷_) public
 open import Data.Product
 open import Data.Sum renaming (map to mapSum)
 -- open import Data.Bool using (Bool; true; false; T; not)
 open import Level renaming (zero to lvl0)
-open import Function using (_∘_; id; flip)
--- open import Function.Equivalence using (_⇔_)
+open import Function using (_∘_; id; flip; _on_)
+open import Function.Equivalence using (_⇔_)
 open import Relation.Nullary
 open import Relation.Unary
 open import Relation.Nullary.Negation
 open import Relation.Nullary.Decidable renaming (map to mapDec; map′ to mapDec′)
-open import Relation.Binary
-open import Relation.Binary.PropositionalEquality as PropEq using (_≡_; _≢_; refl; sym; cong; trans)
+open import Relation.Binary hiding (_⇒_)
+open import Relation.Binary.PropositionalEquality
+-- open ≡-Reasoning
 
 Collection : Set
 Collection = List String
@@ -25,10 +26,14 @@ data _∈c_ : REL String Collection lvl0 where
     here  : ∀ {   x A}         → x ∈c x ∷ A
     there : ∀ {a x A} → x ∈c A → x ∈c a ∷ A
 
+c[_] : REL Collection String lvl0
 c[_] = flip _∈c_
 
 _∉c_ : REL String Collection _
 x ∉c A = x ∉ c[ A ]
+
+[]-empty : Empty c[ [] ]
+[]-empty = λ x → λ ()
 
 here-respects-≡ : ∀ {A} → (λ x → x ∈ c[ A ]) Respects _≡_
 here-respects-≡ refl = id
@@ -74,8 +79,6 @@ union (a ∷ A) B with a ∈? B
 union (a ∷ A) B | yes p = union A B
 union (a ∷ A) B | no ¬p = a ∷ union A B
 
-
-
 in-right-union : ∀ {x} A B → x ∈ c[ B ] → x ∈ c[ union A B ]
 in-right-union []      B x∈B = x∈B
 in-right-union (a ∷ A) B x∈B with a ∈? B
@@ -89,6 +92,26 @@ in-left-union (a ∷ A) B here        | yes p = in-right-union A B p
 in-left-union (a ∷ A) B (there x∈A) | yes p = in-left-union A B x∈A
 in-left-union (a ∷ A) B here        | no ¬p = here
 in-left-union (a ∷ A) B (there x∈A) | no ¬p = there (in-left-union A B x∈A)
+
+to : ∀ {x} A → x ∈ c[ [] ] ∪ c[ A ] → x ∈ c[ A ]
+to A (inj₁ ())
+to A (inj₂ ∈A) = ∈A
+
+∪-left-identity : ∀ {x} A → x ∈ c[ [] ] ∪ c[ A ] ⇔ x ∈ c[ A ]
+∪-left-identity A = record
+    { to   = record { _⟨$⟩_ = ⇒   ; cong = cong ⇒    }
+    ; from = record { _⟨$⟩_ = inj₂ ; cong = cong inj₂ }
+    }
+    where
+            ⇒ : ∀ {x} → x ∈ c[ [] ] ∪ c[ A ] → x ∈ c[ A ]
+            ⇒ (inj₁ ())
+            ⇒ (inj₂ ∈A) = ∈A
+
+-- ∪-union (a ∷ A) B = {!   !}
+-- ∪-union : ∀ {x} A B → x ∈ c[ A ] ∪ c[ B ] → x ∈ c[ union A B ]
+
+-- ∪-union A B (inj₁ ∈A) = in-left-union A B ∈A
+-- ∪-union A B (inj₂ ∈B) = in-right-union A B ∈B
 
 in-either : ∀ {x} A B → x ∈ c[ union A B ] → x ∈ c[ A ] ⊎ x ∈ c[ B ]
 in-either []      B x∈A∪B         = inj₂ x∈A∪B
