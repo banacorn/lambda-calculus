@@ -93,10 +93,6 @@ in-left-union (a ∷ A) B (there x∈A) | yes p = in-left-union A B x∈A
 in-left-union (a ∷ A) B here        | no ¬p = here
 in-left-union (a ∷ A) B (there x∈A) | no ¬p = there (in-left-union A B x∈A)
 
-to : ∀ {x} A → x ∈ c[ [] ] ∪ c[ A ] → x ∈ c[ A ]
-to A (inj₁ ())
-to A (inj₂ ∈A) = ∈A
-
 ∪-left-identity : ∀ {x} A → x ∈ c[ [] ] ∪ c[ A ] ⇔ x ∈ c[ A ]
 ∪-left-identity A = record
     { to   = record { _⟨$⟩_ = ⇒   ; cong = cong ⇒    }
@@ -107,6 +103,16 @@ to A (inj₂ ∈A) = ∈A
             ⇒ (inj₁ ())
             ⇒ (inj₂ ∈A) = ∈A
 
+∪-right-identity : ∀ {x} A → x ∈ c[ A ] ∪ c[ [] ] ⇔ x ∈ c[ A ]
+∪-right-identity A = record
+    { to   = record { _⟨$⟩_ = ⇒ ; cong = cong ⇒ }
+    ; from = record { _⟨$⟩_ = inj₁ ; cong = cong inj₁ }
+    }
+    where
+            ⇒ : ∀ {x} → x ∈ c[ A ] ∪ c[ [] ] → x ∈ c[ A ]
+            ⇒ (inj₁ ∈A) = ∈A
+            ⇒ (inj₂ ())
+            
 -- ∪-union (a ∷ A) B = {!   !}
 -- ∪-union : ∀ {x} A B → x ∈ c[ A ] ∪ c[ B ] → x ∈ c[ union A B ]
 
