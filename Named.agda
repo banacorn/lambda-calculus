@@ -8,6 +8,8 @@ open import Data.Sum
 -- open import Data.Nat.Properties using (strictTotalOrder)
 -- open import Relation.Binary using (StrictTotalOrder)
 -- open import Relation.Binary.Core
+open import Function.Equivalence using (_⇔_)
+
 open import Relation.Nullary
 open import Relation.Unary
 open import Relation.Nullary.Negation
@@ -81,27 +83,47 @@ lem-1-2-5-a (Abs x M) N v v∉M | no ¬p = cong (Abs x) (lem-1-2-5-a M N v (stil
 --     {!   !}
 -- ∎
 
--- If M[v≔N] is defined, v ≠ x and x ∈ FV(M) then x ∈ FV(M[v≔N])
--- lem-1-2-5-b-i : ∀ {x v N} M → v ≢ x → (x ∈ FV M) ≡ (x ∈ FV (M [ v ≔ N ]))
-lem-1-2-5-b-i : ∀ {x v N} M → v ≢ x → (x ∈ c[ FV M ]) ≡ (x ∈ c[ FV (M [ v ≔ N ]) ])
+goal0 : ∀ {x v N} P Q → x ∈c union (FV P) (FV Q) → x ∈c union (FV (P [ v ≔ N ])) (FV (Q [ v ≔ N ]))
+goal0 P Q ∈∪ = {!   !}
+
+-- If M[v≔N] is defined, v ≠ x and x ∈ FV(M) iff x ∈ FV(M[v≔N])
+lem-1-2-5-b-i : ∀ {x v N} M → v ≢ x → x ∈ c[ FV M ] ⇔ x ∈ c[ FV (M [ v ≔ N ]) ]
 lem-1-2-5-b-i {v = v} (Var w) v≢x with w ≟ v
-lem-1-2-5-b-i (Var v) v≢x | yes refl = {!   !}
-lem-1-2-5-b-i {x} (Var w) v≢x | no ¬p = refl -- cong (_∈_ x) refl
-lem-1-2-5-b-i {x} {v} {N} (App P Q) v≢x =
-    begin
-        x ∈ c[ union (FV P) (FV Q) ]
-    ≡⟨ {!   !} ⟩
-        {!   !}
-    ≡⟨ {!   !} ⟩
-        {!   !}
-    ≡⟨ {!   !} ⟩
-        {!   !}
-    ≡⟨ {!   !} ⟩
-        {!   !}
-    ≡⟨ {!   !} ⟩
-        x ∈ c[ union (FV (P [ v ≔ N ])) (FV (Q [ v ≔ N ])) ]
-    ∎
-lem-1-2-5-b-i (Abs w P) v≢x = {!    !}
+lem-1-2-5-b-i (Var v) v≢x | yes refl = {! v≢x  !}
+lem-1-2-5-b-i (Var w) v≢x | no ¬p = {!   !}
+lem-1-2-5-b-i {x} {v} {N} (App P Q) v≢x = record
+    { to = record { _⟨$⟩_ = to ; cong = cong to }
+    ; from = {!   !}
+    }
+    where   open import Relation.Binary.PropositionalEquality using (setoid)
+            open import Function.Equality using (_⟶_)
+            to : (x ∈c union (FV P) (FV Q)) → x ∈c union (FV (P [ v ≔ N ])) (FV (Q [ v ≔ N ]))
+            to a = goal0 P Q a
+
+            
+lem-1-2-5-b-i (Abs w M) v≢x = {!   !}
+
+-- lem-1-2-5-b-i : ∀ {x v N} M → v ≢ x → (x ∈ FV M) ⇔ (x ∈ FV (M [ v ≔ N ]))
+-- lem-1-2-5-b-i : ∀ {x v N} M → v ≢ x → (x ∈ FV M) ≡ (x ∈ FV (M [ v ≔ N ]))
+-- lem-1-2-5-b-i : ∀ {x v N} M → v ≢ x → (x ∈ c[ FV M ]) ≡ (x ∈ c[ FV (M [ v ≔ N ]) ])
+-- lem-1-2-5-b-i {v = v} (Var w) v≢x with w ≟ v
+-- lem-1-2-5-b-i (Var v) v≢x | yes refl = {!   !}
+-- lem-1-2-5-b-i {x} (Var w) v≢x | no ¬p = refl -- cong (_∈_ x) refl
+-- lem-1-2-5-b-i {x} {v} {N} (App P Q) v≢x =
+--     begin
+--         x ∈ c[ union (FV P) (FV Q) ]
+--     ≡⟨ sym {! ∪-union  !} ⟩
+--         {!   !}
+--     ≡⟨ {!   !} ⟩
+--         {!   !}
+--     ≡⟨ {!   !} ⟩
+--         {!   !}
+--     ≡⟨ {!   !} ⟩
+--         {!   !}
+--     ≡⟨ {!   !} ⟩
+--         x ∈ c[ union (FV (P [ v ≔ N ])) (FV (Q [ v ≔ N ])) ]
+--     ∎
+-- lem-1-2-5-b-i (Abs w P) v≢x = {!    !}
 -- lem-1-2-5-b-i {v = v} (Var w) v≢x x∈FV-M with w ≟ v
 -- lem-1-2-5-b-i (Var w)   v≢x x∈FV-M | yes p = ? -- contradiction (trans (singleton-≡ x∈FV-M) p) (v≢x ∘ sym)
 -- lem-1-2-5-b-i (Var w)   v≢x x∈FV-M | no ¬p = ? -- x∈FV-M
