@@ -8,7 +8,7 @@ open import Data.Sum
 -- open import Data.Nat.Properties using (strictTotalOrder)
 -- open import Relation.Binary using (StrictTotalOrder)
 -- open import Relation.Binary.Core
-open import Function.Equivalence using (_⇔_)
+open import Function.Equivalence using (_⇔_; equivalence)
 
 open import Relation.Nullary
 open import Relation.Unary
@@ -21,6 +21,7 @@ open ≡-Reasoning
 
 open import Data.Collection
 open import Data.Collection.Properties
+open import Data.Collection.Equivalence
 
 
 Variable = String
@@ -87,22 +88,19 @@ lem-1-2-5-a (Abs x M) N v v∉M | no ¬p = cong (Abs x) (lem-1-2-5-a M N v (stil
 --     {!   !}
 -- ∎
 
-goal0 : ∀ {x v N} P Q → x ∈c union (FV P) (FV Q) → x ∈c union (FV (P [ v ≔ N ])) (FV (Q [ v ≔ N ]))
-goal0 P Q ∈∪ = {!   !}
+-- goal0 : ∀ {x v N} P Q → x ∈c union (FV P) (FV Q) → x ∈c union (FV (P [ v ≔ N ])) (FV (Q [ v ≔ N ]))
+-- goal0 {x} {v} {N} P Q ∈∪ =
 
 -- If M[v≔N] is defined, v ≠ x and x ∈ FV(M) iff x ∈ FV(M[v≔N])
 lem-1-2-5-b-i : ∀ {x v N} M → v ≢ x → x ∈ c[ FV M ] ⇔ x ∈ c[ FV (M [ v ≔ N ]) ]
 lem-1-2-5-b-i {v = v} (Var w) v≢x with w ≟ v
 lem-1-2-5-b-i (Var v) v≢x | yes refl = {! v≢x  !}
 lem-1-2-5-b-i (Var w) v≢x | no ¬p = {!   !}
-lem-1-2-5-b-i {x} {v} {N} (App P Q) v≢x = record
-    { to = record { _⟨$⟩_ = to ; cong = cong to }
-    ; from = {!   !}
-    }
+lem-1-2-5-b-i {x} {v} {N} (App P Q) v≢x = equivalence to {!   !}
     where   open import Relation.Binary.PropositionalEquality using (setoid)
             open import Function.Equality using (_⟶_)
-            to : (x ∈c union (FV P) (FV Q)) → x ∈c union (FV (P [ v ≔ N ])) (FV (Q [ v ≔ N ]))
-            to a = goal0 P Q a
+            to : x ∈ c[ union (FV P) (FV Q) ] → x ∈ c[ union (FV (P [ v ≔ N ])) (FV (Q [ v ≔ N ])) ]
+            to = map-⊆-union {FV P} {FV Q} {FV (P [ v ≔ N ])} {FV (Q [ v ≔ N ])} (_≢_ v) {!  !} {!   !} {!   !}
 
 
 lem-1-2-5-b-i (Abs w M) v≢x = {!   !}

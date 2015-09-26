@@ -99,20 +99,30 @@ in-neither : ∀ A B → c[ union A B ] ⊈ c[ A ] ∪ c[ B ]
 in-neither A B ∉union (inj₁ ∈A) = contradiction (in-left-union A B ∈A) ∉union
 in-neither A B ∉union (inj₂ ∈B) = contradiction (in-right-union A B ∈B) ∉union
 
--- in-neither : ∀ A B → c[ union A B ] ⊈ c[ A ] ∩ c[ B ]
--- in-neither [] B ∉union (() , ∈B)
--- in-neither (a ∷ A) B ∉union ∈both with a ∈? B
--- in-neither (a ∷ A) B ∉union (∈a∷A , ∈B) | yes p = contradiction (in-right-union A B ∈B) ∉union
--- in-neither (a ∷ A) B ∉union (∈a∷A , ∈B) | no ¬p = contradiction (there (in-right-union A B ∈B)) ∉union
-
--- in-neither : ∀ A B → c[ union A B ] ⊈ c[ A ] ∩ c[ B ]
--- in-neither [] B ∉union (() , ∈B)
--- in-neither (a ∷ A) B ∉union ∈both with a ∈? B
--- in-neither (a ∷ A) B ∉union (∈a∷A , ∈B) | yes p = contradiction (in-right-union A B ∈B) ∉union
--- in-neither (a ∷ A) B ∉union (∈a∷A , ∈B) | no ¬p = contradiction (there (in-right-union A B ∈B)) ∉union
-
 ∪-union : ∀ A B → c[ A ] ∪ c[ B ] ≋ c[ union A B ]
 ∪-union A B = equivalence to (in-either A B)
     where   to : ∀ {x} → x ∈ c[ A ] ∪ c[ B ] → x ∈ c[ union A B ]
             to (inj₁ ∈A) = in-left-union A B ∈A
             to (inj₂ ∈B) = in-right-union A B ∈B
+
+
+head-∈ : ∀ a A B → c[ a ∷ A ] ⊆ c[ B ] → a ∈ c[ B ]
+head-∈ a A B ⊆B = ⊆B here
+
+tail-⊆ : ∀ a A B → c[ a ∷ A ] ⊆ c[ B ] → c[ A ] ⊆ c[ B ]
+tail-⊆ a A B ⊆B ∈A = ⊆B (there ∈A)
+
+map-⊆-union : ∀ {A B C D a} (P : String → Set a) → ∀[ P ] c[ A ] ⊆ c[ C ] → ∀[ P ] c[ B ] ⊆ c[ D ] → ∀[ P ] c[ union A B ] ⊆ c[ union C D ]
+map-⊆-union {[]}    {B} {C} {D} P A⊆C B⊆D ∈P ∈A∪B = in-right-union C D (B⊆D ∈P ∈A∪B)
+map-⊆-union {a ∷ A} {B} {C} {D} P A⊆C B⊆D ∈P ∈A∪B with a ∈? B
+map-⊆-union {a ∷ A}             P A⊆C B⊆D ∈P ∈A∪B         | yes p = map-⊆-union P (λ P A → A⊆C P (there A)) B⊆D ∈P ∈A∪B
+map-⊆-union {a ∷ A} {B} {C} {D} P A⊆C B⊆D ∈P here         | no ¬p = in-left-union C D (A⊆C ∈P here)
+map-⊆-union {a ∷ A}             P A⊆C B⊆D ∈P (there ∈A∪B) | no ¬p = map-⊆-union P (λ P₁ A₁ → A⊆C P₁ (there A₁)) B⊆D ∈P ∈A∪B
+-- map-⊆-union {A} P A⊆C B⊆D ∈P ∈A∪B = {!   !}
+-- map-⊆-union : ∀ A B C D → c[ A ] ⊆ c[ C ] → c[ B ] ⊆ c[ D ] → c[ union A B ] ⊆ c[ union C D ]
+-- map-⊆-union [] ._ C D A⊆C B⊆D here = in-right-union C D (B⊆D here)
+-- map-⊆-union [] ._ C D A⊆C B⊆D (there ∈A∪B) = in-right-union C D (B⊆D (there ∈A∪B))
+-- map-⊆-union (a ∷ A) B C D A⊆C B⊆D ∈A∪B with a ∈? B
+-- map-⊆-union (a ∷ A) B C D A⊆C B⊆D ∈A∪B         | yes p = map-⊆-union A B C D (A⊆C ∘ there) B⊆D ∈A∪B
+-- map-⊆-union (a ∷ A) B C D A⊆C B⊆D here         | no ¬p = in-left-union C D (A⊆C here)
+-- map-⊆-union (a ∷ A) B C D A⊆C B⊆D (there ∈A∪B) | no ¬p = map-⊆-union A B C D (A⊆C ∘ there) B⊆D ∈A∪B

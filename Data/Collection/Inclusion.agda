@@ -10,9 +10,6 @@ open import Relation.Unary hiding (_⇒_)
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 
-_⊆0_ : Pred String zero → Pred String zero → Set
-_⊆0_ = _⊆_
-
 ≋⇒⊆ : _≋_ ⇒ _⊆_
 ≋⇒⊆ P≋Q ∈P = nach P≋Q ∈P
 
