@@ -4,9 +4,11 @@ open import Collection.Equivalence
 open import Collection.Core
 
 open import Function using (id; _∘_)
+open import Function.Equivalence using (equivalence)
 open import Level using (Level; suc; zero)
 open import Relation.Unary hiding (_⇒_)
 open import Relation.Binary
+open import Relation.Binary.PropositionalEquality
 
 _⊆0_ : Pred String zero → Pred String zero → Set
 _⊆0_ = _⊆_
@@ -22,4 +24,13 @@ _⊆0_ = _⊆_
     { isEquivalence = ≋-IsEquivalence
     ; reflexive = ≋⇒⊆
     ; trans = ⊆-Transitive
+    }
+
+⊆-Antisymmetric : Antisymmetric _≋_ _⊆_
+⊆-Antisymmetric P⊆Q Q⊆P = equivalence P⊆Q Q⊆P
+
+⊆-IsPartialOrder : IsPartialOrder _≋_ _⊆_
+⊆-IsPartialOrder = record
+    { isPreorder = ⊆-IsPreorder
+    ; antisym = ⊆-Antisymmetric
     }
