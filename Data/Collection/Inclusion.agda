@@ -1,7 +1,7 @@
-module Collection.Inclusion where
+module Data.Collection.Inclusion where
 
-open import Collection.Equivalence
-open import Collection.Core
+open import Data.Collection.Equivalence
+open import Data.Collection.Core
 
 open import Function using (id; _∘_)
 open import Function.Equivalence using (equivalence)
@@ -26,6 +26,14 @@ _⊆0_ = _⊆_
     ; trans = ⊆-Transitive
     }
 
+⊆-Preorder : Preorder _ _ _
+⊆-Preorder = record
+    { Carrier = Pred String zero
+    ; _≈_ = _≋_
+    ; _∼_ = _⊆_
+    ; isPreorder = ⊆-IsPreorder
+    }
+
 ⊆-Antisymmetric : Antisymmetric _≋_ _⊆_
 ⊆-Antisymmetric P⊆Q Q⊆P = equivalence P⊆Q Q⊆P
 
@@ -33,4 +41,12 @@ _⊆0_ = _⊆_
 ⊆-IsPartialOrder = record
     { isPreorder = ⊆-IsPreorder
     ; antisym = ⊆-Antisymmetric
+    }
+
+⊆-Poset : Poset _ _ _
+⊆-Poset = record
+    { Carrier = Pred String zero
+    ; _≈_ = _≋_
+    ; _≤_ = _⊆_
+    ; isPartialOrder = ⊆-IsPartialOrder
     }

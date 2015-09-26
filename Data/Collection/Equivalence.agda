@@ -1,6 +1,6 @@
-module Collection.Equivalence where
+module Data.Collection.Equivalence where
 
-open import Collection.Core
+open import Data.Collection.Core
 open import Data.String using (String)
 
 open import Function using (id; _∘_)
@@ -42,7 +42,14 @@ A ≋ B = {x : String} → x ∈ A ⇔ x ∈ B
 
 ≋-IsEquivalence : IsEquivalence _≋_
 ≋-IsEquivalence = record
-    { refl = equivalence id id 
+    { refl = equivalence id id
     ; sym = ≋-Symmetric
     ; trans = ≋-Transitive
+    }
+
+≋-Setoid : Setoid _ _
+≋-Setoid = record
+    { Carrier = Pred String zero
+    ; _≈_ = _≋_
+    ; isEquivalence = ≋-IsEquivalence
     }

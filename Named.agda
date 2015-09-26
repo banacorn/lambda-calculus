@@ -19,7 +19,8 @@ open import Function using (_∘_)
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 
-open import Named.Collection
+open import Data.Collection
+open import Data.Collection.Properties
 
 
 Variable = String
@@ -69,10 +70,13 @@ lem-1-2-5-a : ∀ M N v → v ∉ c[ FV M ] → M [ v ≔ N ] ≡ M
 lem-1-2-5-a (Var x) N v v∉M with x ≟ v
 lem-1-2-5-a (Var x) N .x v∉M | yes refl = contradiction here v∉M
 lem-1-2-5-a (Var x) N v v∉M | no ¬p = refl
-lem-1-2-5-a (App P Q) N v v∉M = cong₂ App (lem-1-2-5-a P N v (proj₁ (in-neither (FV P) (FV Q) v∉M))) (lem-1-2-5-a Q N v (proj₂ (in-neither (FV P) (FV Q) v∉M)))
+lem-1-2-5-a (App P Q) N v v∉M = cong₂
+    App
+        (lem-1-2-5-a P N v (not-in-left-union (FV P) (FV Q) v∉M))
+        (lem-1-2-5-a Q N v (not-in-right-union (FV P) (FV Q) v∉M))
 lem-1-2-5-a (Abs x M) N v v∉M with x ≟ v
 lem-1-2-5-a (Abs x M) N v v∉M | yes p = cong (λ z → Abs z M) (sym p)
-lem-1-2-5-a (Abs x M) N v v∉M | no ¬p = cong (Abs x) (lem-1-2-5-a M N v (still-∉-after-recovered x (FV M) (¬p ∘ sym) v∉M))
+lem-1-2-5-a (Abs x M) N v v∉M | no ¬p = cong (Abs x) (lem-1-2-5-a M N v (still-∉-after-recovered x (FV M) ¬p v∉M))
 
 
 -- begin
@@ -100,7 +104,7 @@ lem-1-2-5-b-i {x} {v} {N} (App P Q) v≢x = record
             to : (x ∈c union (FV P) (FV Q)) → x ∈c union (FV (P [ v ≔ N ])) (FV (Q [ v ≔ N ]))
             to a = goal0 P Q a
 
-            
+
 lem-1-2-5-b-i (Abs w M) v≢x = {!   !}
 
 -- lem-1-2-5-b-i : ∀ {x v N} M → v ≢ x → (x ∈ FV M) ⇔ (x ∈ FV (M [ v ≔ N ]))
