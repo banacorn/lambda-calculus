@@ -12,38 +12,50 @@ open import Relation.Unary
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 
+--------------------------------------------------------------------------------
+--  Types
+--------------------------------------------------------------------------------
+
+Element : Set
+Element = String
 
 Collection : Set
-Collection = List String
+Collection = List Element
+
+--------------------------------------------------------------------------------
+--  Membership
+--------------------------------------------------------------------------------
 
 infix 4 _∈c_ _∉c_
 
-data _∈c_ : REL String Collection zero where
+data _∈c_ : REL Element Collection zero where
     here  : ∀ {   x A}         → x ∈c x ∷ A
     there : ∀ {a x A} → x ∈c A → x ∈c a ∷ A
 
-c[_] : REL Collection String zero
+_∉c_ : REL Element Collection _
+x ∉c A = ¬ x ∈c A
+
+c[_] : REL Collection Element zero
 c[_] = flip _∈c_
 
-_∉c_ : REL String Collection _
-x ∉c A = x ∉ c[ A ]
+infix 4 _∈?_
 
 there-if-not-here : ∀ {x a A} → x ≢ a → x ∈ c[ a ∷ A ] → x ∈ c[ A ]
 there-if-not-here x≢a here          = contradiction refl x≢a
 there-if-not-here x≢a (there x∈a∷A) = x∈a∷A
 
-infix 4 _∈?_
-
-_∈?_ : (x : String) → (A : Collection) → Dec (x ∈ c[ A ])
+_∈?_ : (x : Element) → (A : Collection) → Dec (x ∈ c[ A ])
 x ∈? [] = no (λ ())
 x ∈? (a ∷ A) with x ≟ a
 x ∈? (.x ∷ A) | yes refl = yes here
 x ∈? (a ∷ A) | no ¬p = mapDec′ there (there-if-not-here ¬p) (x ∈? A)
 
+--------------------------------------------------------------------------------
+--  Inclusion
+--------------------------------------------------------------------------------
 
-∀[_]_⊆_ : ∀ {a ℓ₀ ℓ₁ ℓ₂} {A : Set a} → Pred A ℓ₀ → Pred A ℓ₁ → Pred A ℓ₂ → Set _
-∀[ R ] P ⊆ Q = ∀ {x} → x ∈ R → x ∈ P → x ∈ Q
-
+_⊆[_]_ : ∀ {a ℓ₀ ℓ₁ ℓ₂} {A : Set a} → Pred A ℓ₀ → Pred A ℓ₁ → Pred A ℓ₂ → Set _
+A ⊆[ P ] B = ∀ {x} → x ∈ P → x ∈ A → x ∈ B
 
 infixr 6 _⊈_
 
@@ -51,9 +63,13 @@ infixr 6 _⊈_
 _⊈_ : ∀ {a ℓ₁ ℓ₂} {A : Set a} → Pred A ℓ₁ → Pred A ℓ₂ → Set _
 P ⊈ Q = ∀ {x} → x ∉ P → x ∉ Q
 
-∀[_]_⊈_ : ∀ {a ℓ₀ ℓ₁ ℓ₂} {A : Set a} → Pred A ℓ₀ → Pred A ℓ₁ → Pred A ℓ₂ → Set _
-∀[ R ] P ⊈ Q = ∀ {x} → x ∈ R → x ∉ P → x ∉ Q
+_⊈[_]_ : ∀ {a ℓ₀ ℓ₁ ℓ₂} {A : Set a} → Pred A ℓ₀ → Pred A ℓ₁ → Pred A ℓ₂ → Set _
+A ⊈[ P ] B = ∀ {x} → x ∈ P → x ∉ A → x ∉ B
 
+
+--------------------------------------------------------------------------------
+--  Miscs
+--------------------------------------------------------------------------------
 
 ∷-⊆-monotone : ∀ {a A B} → c[ A ] ⊆ c[ B ] → c[ a ∷ A ] ⊆ c[ a ∷ B ]
 ∷-⊆-monotone f here       = here

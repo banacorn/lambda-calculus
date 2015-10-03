@@ -100,7 +100,7 @@ lem-1-2-5-b-i {x} {v} {N} (App P Q) v≢x = equivalence to {!   !}
     where   open import Relation.Binary.PropositionalEquality using (setoid)
             open import Function.Equality using (_⟶_)
             to : x ∈ c[ union (FV P) (FV Q) ] → x ∈ c[ union (FV (P [ v ≔ N ])) (FV (Q [ v ≔ N ])) ]
-            to = map-⊆-union {FV P} {FV Q} {FV (P [ v ≔ N ])} {FV (Q [ v ≔ N ])} (_≢_ v) {!  !} {!   !} {!   !}
+            to = map-⊆-union {FV P} {FV Q} {FV (P [ v ≔ N ])} {FV (Q [ v ≔ N ])} (_≢_ v) {!   !} {!   !} {!   !}
 
 
 lem-1-2-5-b-i (Abs w M) v≢x = {!   !}

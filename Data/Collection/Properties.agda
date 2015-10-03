@@ -33,7 +33,7 @@ singleton-≡ (there ())
 --------------------------------------------------------------------------------
 
 -- still-∈-after-deleted : ∀ {x} y A → x ≢ y → x ∈ c[ A ] → x ∈ c[ delete y A ]
-still-∈-after-deleted : ∀ y A → ∀[ _≢_ y ] c[ A ] ⊆ c[ delete y A ]
+still-∈-after-deleted : ∀ y A → c[ A ] ⊆[ _≢_ y ] c[ delete y A ]
 still-∈-after-deleted y []          ≢y ()
 still-∈-after-deleted y (a ∷ A) {x} ≢y ∈A with y ≟ a
 still-∈-after-deleted y (a ∷ A) ≢y here       | yes p = contradiction p ≢y
@@ -42,7 +42,7 @@ still-∈-after-deleted y (x ∷ A) ≢y here       | no ¬p = here
 still-∈-after-deleted y (a ∷ A) ≢y (there ∈A) | no ¬p = there (still-∈-after-deleted y A ≢y ∈A)
 
 -- still-∉-after-recovered : ∀ {x} y A → x ≢ y → x ∉c delete y A → x ∉ c[ A ]
-still-∉-after-recovered : ∀ y A → ∀[ _≢_ y ] c[ delete y A ] ⊈ c[ A ]
+still-∉-after-recovered : ∀ y A → c[ delete y A ] ⊈[ _≢_ y ] c[ A ]
 still-∉-after-recovered y []      ≢y ∉A-y ()
 still-∉-after-recovered y (a ∷ A) ≢y ∉A-y ∈a∷A with y ≟ a
 still-∉-after-recovered y (a ∷ A) ≢y ∉A-y here       | yes p = contradiction p ≢y
@@ -112,7 +112,7 @@ head-∈ a A B ⊆B = ⊆B here
 tail-⊆ : ∀ a A B → c[ a ∷ A ] ⊆ c[ B ] → c[ A ] ⊆ c[ B ]
 tail-⊆ a A B ⊆B ∈A = ⊆B (there ∈A)
 
-map-⊆-union : ∀ {A B C D a} (P : String → Set a) → ∀[ P ] c[ A ] ⊆ c[ C ] → ∀[ P ] c[ B ] ⊆ c[ D ] → ∀[ P ] c[ union A B ] ⊆ c[ union C D ]
+map-⊆-union : ∀ {A B C D a} (P : String → Set a) → c[ A ] ⊆[ P ] c[ C ] → c[ B ] ⊆[ P ] c[ D ] → c[ union A B ] ⊆[ P ] c[ union C D ]
 map-⊆-union {[]}    {B} {C} {D} P A⊆C B⊆D ∈P ∈A∪B = in-right-union C D (B⊆D ∈P ∈A∪B)
 map-⊆-union {a ∷ A} {B} {C} {D} P A⊆C B⊆D ∈P ∈A∪B with a ∈? B
 map-⊆-union {a ∷ A}             P A⊆C B⊆D ∈P ∈A∪B         | yes p = map-⊆-union P (λ P A → A⊆C P (there A)) B⊆D ∈P ∈A∪B
