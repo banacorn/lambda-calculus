@@ -2,11 +2,12 @@ module Data.Collection.Properties where
 
 open import Data.Collection.Core
 open import Data.Collection.Equivalence
+open import Data.Collection.Inclusion
 open import Data.Collection
 
 open import Data.Sum renaming (map to mapSum)
 open import Data.Product
-open import Function.Equivalence using (equivalence)
+open import Function.Equivalence using (_⇔_; equivalence)
 
 -- open import Data.List public using (List; []; _∷_)
 -- open import Data.String public using (String; _≟_)
@@ -24,9 +25,13 @@ open import Relation.Binary.PropositionalEquality
 --  Singleton
 --------------------------------------------------------------------------------
 
-singleton-≡ : ∀ {x y} → x ∈ c[ singleton y ] → x ≡ y
-singleton-≡ here = refl
-singleton-≡ (there ())
+singleton-≡ : ∀ {x y} → x ∈ c[ singleton y ] ⇔ x ≡ y
+singleton-≡ = equivalence to from
+    where   to : ∀ {x y} → x ∈ c[ singleton y ] → x ≡ y
+            to here = refl
+            to (there ())
+            from : ∀ {x y} → x ≡ y → x ∈ c[ singleton y ]
+            from refl = here
 
 --------------------------------------------------------------------------------
 --  Delete
@@ -112,17 +117,17 @@ head-∈ a A B ⊆B = ⊆B here
 tail-⊆ : ∀ a A B → c[ a ∷ A ] ⊆ c[ B ] → c[ A ] ⊆ c[ B ]
 tail-⊆ a A B ⊆B ∈A = ⊆B (there ∈A)
 
-map-⊆-union : ∀ {A B C D a} (P : String → Set a) → c[ A ] ⊆[ P ] c[ C ] → c[ B ] ⊆[ P ] c[ D ] → c[ union A B ] ⊆[ P ] c[ union C D ]
-map-⊆-union {[]}    {B} {C} {D} P A⊆C B⊆D ∈P ∈A∪B = in-right-union C D (B⊆D ∈P ∈A∪B)
-map-⊆-union {a ∷ A} {B} {C} {D} P A⊆C B⊆D ∈P ∈A∪B with a ∈? B
-map-⊆-union {a ∷ A}             P A⊆C B⊆D ∈P ∈A∪B         | yes p = map-⊆-union P (λ P A → A⊆C P (there A)) B⊆D ∈P ∈A∪B
-map-⊆-union {a ∷ A} {B} {C} {D} P A⊆C B⊆D ∈P here         | no ¬p = in-left-union C D (A⊆C ∈P here)
-map-⊆-union {a ∷ A}             P A⊆C B⊆D ∈P (there ∈A∪B) | no ¬p = map-⊆-union P (λ P₁ A₁ → A⊆C P₁ (there A₁)) B⊆D ∈P ∈A∪B
--- map-⊆-union {A} P A⊆C B⊆D ∈P ∈A∪B = {!   !}
--- map-⊆-union : ∀ A B C D → c[ A ] ⊆ c[ C ] → c[ B ] ⊆ c[ D ] → c[ union A B ] ⊆ c[ union C D ]
--- map-⊆-union [] ._ C D A⊆C B⊆D here = in-right-union C D (B⊆D here)
--- map-⊆-union [] ._ C D A⊆C B⊆D (there ∈A∪B) = in-right-union C D (B⊆D (there ∈A∪B))
--- map-⊆-union (a ∷ A) B C D A⊆C B⊆D ∈A∪B with a ∈? B
--- map-⊆-union (a ∷ A) B C D A⊆C B⊆D ∈A∪B         | yes p = map-⊆-union A B C D (A⊆C ∘ there) B⊆D ∈A∪B
--- map-⊆-union (a ∷ A) B C D A⊆C B⊆D here         | no ¬p = in-left-union C D (A⊆C here)
--- map-⊆-union (a ∷ A) B C D A⊆C B⊆D (there ∈A∪B) | no ¬p = map-⊆-union A B C D (A⊆C ∘ there) B⊆D ∈A∪B
+union-monotone : ∀ {A B C D a} (P : String → Set a) → c[ A ] ⊆[ P ] c[ C ] → c[ B ] ⊆[ P ] c[ D ] → c[ union A B ] ⊆[ P ] c[ union C D ]
+union-monotone {[]}    {B} {C} {D} P A⊆C B⊆D ∈P ∈A∪B = in-right-union C D (B⊆D ∈P ∈A∪B)
+union-monotone {a ∷ A} {B} {C} {D} P A⊆C B⊆D ∈P ∈A∪B with a ∈? B
+union-monotone {a ∷ A}             P A⊆C B⊆D ∈P ∈A∪B         | yes p = union-monotone P (λ P A → A⊆C P (there A)) B⊆D ∈P ∈A∪B
+union-monotone {a ∷ A} {B} {C} {D} P A⊆C B⊆D ∈P here         | no ¬p = in-left-union C D (A⊆C ∈P here)
+union-monotone {a ∷ A}             P A⊆C B⊆D ∈P (there ∈A∪B) | no ¬p = union-monotone P (λ P₁ A₁ → A⊆C P₁ (there A₁)) B⊆D ∈P ∈A∪B
+-- union-monotone {A} P A⊆C B⊆D ∈P ∈A∪B = {!   !}
+-- union-monotone : ∀ A B C D → c[ A ] ⊆ c[ C ] → c[ B ] ⊆ c[ D ] → c[ union A B ] ⊆ c[ union C D ]
+-- union-monotone [] ._ C D A⊆C B⊆D here = in-right-union C D (B⊆D here)
+-- union-monotone [] ._ C D A⊆C B⊆D (there ∈A∪B) = in-right-union C D (B⊆D (there ∈A∪B))
+-- union-monotone (a ∷ A) B C D A⊆C B⊆D ∈A∪B with a ∈? B
+-- union-monotone (a ∷ A) B C D A⊆C B⊆D ∈A∪B         | yes p = union-monotone A B C D (A⊆C ∘ there) B⊆D ∈A∪B
+-- union-monotone (a ∷ A) B C D A⊆C B⊆D here         | no ¬p = in-left-union C D (A⊆C here)
+-- union-monotone (a ∷ A) B C D A⊆C B⊆D (there ∈A∪B) | no ¬p = union-monotone A B C D (A⊆C ∘ there) B⊆D ∈A∪B

@@ -1,7 +1,6 @@
 module Data.Collection.Equivalence where
 
 open import Data.Collection.Core
-open import Data.String using (String)
 
 open import Function using (id; _∘_)
 open import Function.Equality using (_⟨$⟩_)
@@ -25,8 +24,8 @@ von = _⟨$⟩_ ∘ from
 
 infixr 5 _≋_
 
-_≋_ : Rel (Pred String zero) _
-A ≋ B = {x : String} → x ∈ A ⇔ x ∈ B
+_≋_ : Rel Membership _
+A ≋ B = {x : Element} → x ∈ A ⇔ x ∈ B
 
 ≋-Reflexive : Reflexive _≋_
 ≋-Reflexive = equivalence id id
@@ -49,7 +48,37 @@ A ≋ B = {x : String} → x ∈ A ⇔ x ∈ B
 
 ≋-Setoid : Setoid _ _
 ≋-Setoid = record
-    { Carrier = Pred String zero
+    { Carrier = Pred Element zero
     ; _≈_ = _≋_
     ; isEquivalence = ≋-IsEquivalence
+    }
+
+--------------------------------------------------------------------------------
+--  Conditional Equivalence
+--------------------------------------------------------------------------------
+
+_≋[_]_ : ∀ {a} → Membership → Pred Element a → Membership → Set a
+A ≋[ P ] B = {x : Element} → P x → x ∈ A ⇔ x ∈ B
+
+-- prefix version of _≋[_]_, with the predicate being the first argument
+[_]≋ : ∀ {a} → Pred Element a → Membership → Membership → Set a
+[_]≋ P A B = A ≋[ P ] B
+
+≋[]-Reflexive : ∀ {a} {P : Pred Element a} → Reflexive [ P ]≋
+≋[]-Reflexive A = equivalence id id
+
+≋[]-Symmetric : ∀ {a} {P : Pred Element a} → Symmetric [ P ]≋
+≋[]-Symmetric z ∈P = record
+    { to = from (z ∈P)
+    ; from = to (z ∈P)
+    }
+
+≋[]-Transitive : ∀ {a} {P : Pred Element a} → Transitive [ P ]≋
+≋[]-Transitive P≋Q Q≋R ∈P = equivalence (nach (Q≋R ∈P) ∘ nach (P≋Q ∈P)) (von (P≋Q ∈P) ∘ von (Q≋R ∈P))
+
+≋[]-IsEquivalence : ∀ {a} {P : Pred Element a} → IsEquivalence [ P ]≋
+≋[]-IsEquivalence {p} = record
+    { refl = λ _ → equivalence id id
+    ; sym = ≋[]-Symmetric
+    ; trans = ≋[]-Transitive
     }

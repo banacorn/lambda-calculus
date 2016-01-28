@@ -8,6 +8,7 @@ open import Data.Sum
 -- open import Data.Nat.Properties using (strictTotalOrder)
 -- open import Relation.Binary using (StrictTotalOrder)
 -- open import Relation.Binary.Core
+open import Function using (id)
 open import Function.Equivalence using (_⇔_; equivalence)
 
 open import Relation.Nullary
@@ -17,12 +18,17 @@ open import Data.Unit using (⊤)
 open import Function using (_∘_)
 -- open import Level renaming (zero to Lzero)
 open import Relation.Binary.PropositionalEquality
-open ≡-Reasoning
+-- open ≡-Reasoning
+
+-- open ≡-Reasoning
+--     renaming (begin_ to beginEq_; _≡⟨_⟩_ to _≡Eq⟨_⟩_; _∎ to _∎Eq)
 
 open import Data.Collection
 open import Data.Collection.Properties
 open import Data.Collection.Equivalence
+open import Data.Collection.Inclusion
 
+open import Relation.Binary.PartialOrderReasoning ⊆-Poset
 
 Variable = String
 
@@ -87,23 +93,69 @@ lem-1-2-5-a (Abs x M) N v v∉M | no ¬p = cong (Abs x) (lem-1-2-5-a M N v (stil
 -- ≡⟨ {!   !} ⟩
 --     {!   !}
 -- ∎
-
--- goal0 : ∀ {x v N} P Q → x ∈c union (FV P) (FV Q) → x ∈c union (FV (P [ v ≔ N ])) (FV (Q [ v ≔ N ]))
--- goal0 {x} {v} {N} P Q ∈∪ =
+-- begin
+--     {!   !}
+-- ≤⟨ {!   !} ⟩
+--     {!   !}
+-- ≤⟨ {!   !} ⟩
+--     {!   !}
+-- ∎
 
 -- If M[v≔N] is defined, v ≠ x and x ∈ FV(M) iff x ∈ FV(M[v≔N])
-lem-1-2-5-b-i : ∀ {x v N} M → v ≢ x → x ∈ c[ FV M ] ⇔ x ∈ c[ FV (M [ v ≔ N ]) ]
-lem-1-2-5-b-i {v = v} (Var w) v≢x with w ≟ v
-lem-1-2-5-b-i (Var v) v≢x | yes refl = {! v≢x  !}
-lem-1-2-5-b-i (Var w) v≢x | no ¬p = {!   !}
-lem-1-2-5-b-i {x} {v} {N} (App P Q) v≢x = equivalence to {!   !}
-    where   open import Relation.Binary.PropositionalEquality using (setoid)
-            open import Function.Equality using (_⟶_)
-            to : x ∈ c[ union (FV P) (FV Q) ] → x ∈ c[ union (FV (P [ v ≔ N ])) (FV (Q [ v ≔ N ])) ]
-            to = map-⊆-union {FV P} {FV Q} {FV (P [ v ≔ N ])} {FV (Q [ v ≔ N ])} (_≢_ v) {!   !} {!   !} {!   !}
+lem-1-2-5-b-i : ∀ {v N} M → c[ FV M ] ≋[ _≢_ v ] c[ FV (M [ v ≔ N ]) ]
+lem-1-2-5-b-i {v} {N} M v≢x = equivalence (to M v≢x) (from M v≢x)
+    where
+            to : ∀ {v N} M → c[ FV M ] ⊆[ _≢_ v ] c[ FV (M [ v ≔ N ]) ]
+            to {v} (Var w) v≢x ∈FV-M with w ≟ v
+            to (Var w) v≢x ∈FV-M | yes p = contradiction (sym (trans (nach singleton-≡ ∈FV-M) p)) v≢x
+            to (Var w) v≢x ∈FV-M | no ¬p = ∈FV-M
+            to {v} {N} (App P Q) v≢x = begin
+                    c[ union (FV P) (FV Q) ]
+                ≤⟨ union-monotone {!   !} {!   !} {!   !} ⟩
+                    {!   !}
+                ≤⟨ {!   !} ⟩
+                    {!   !}
+                ≤⟨ {!   !} ⟩
+                    {!   !}
+                ≤⟨ {!   !} ⟩
+                    {!   !}
+                ≤⟨ {!    !} ⟩
+                    c[ union (FV (P [ v ≔ N ])) (FV (Q [ v ≔ N ])) ]
+                ∎
+            to (Abs w M) v≢x ∈FV-M = {!    !}
+            -- to (Var w) ∈FV-M with w ≟ v
+            -- to (Var w) ∈FV-M | yes p = contradiction (sym (trans (nach singleton-≡ ∈FV-M) p)) v≢x
+            -- to (Var w) ∈FV-M | no ¬p = ∈FV-M
+            -- to (App P Q) = begin
+            --         c[ union (FV P) (FV Q) ]
+            --     ≤⟨ union-monotone {!   !} {!   !} {!   !} ⟩
+            --         {!   !}
+            --     ≤⟨ {!   !} ⟩
+            --         {!   !}
+            --     ≤⟨ {!   !} ⟩
+            --         c[ union (FV (P [ v ≔ N ])) (FV (Q [ v ≔ N ])) ]
+            --     ∎
+            -- to (Abs w M) ∈FV-M = {!   !}
 
-
-lem-1-2-5-b-i (Abs w M) v≢x = {!   !}
+            from : ∀ {v N} M → c[ FV (M [ v ≔ N ]) ] ⊆[ _≢_ v ] c[ FV M ]
+            from M = {!    !}
+-- lem-1-2-5-b-i : ∀ {x v N} M → v ≢ x → x ∈ c[ FV M ] ⇔ x ∈ c[ FV (M [ v ≔ N ]) ]
+-- lem-1-2-5-b-i {x} {v} {N} (Var w) v≢x with w ≟ v -- x ≡ w
+-- lem-1-2-5-b-i {x} {v} {N} (Var w) v≢x | yes p =
+--     equivalence
+--         (λ ∈[w] → contradiction (sym (trans (nach singleton-≡ ∈[w]) p)) v≢x)
+--         from
+--     where   to : x ∈ c[ w ∷ [] ] → x ∈ c[ FV N ]
+--             to ∈[w] = {!   !}
+--             from : x ∈ c[ FV N ] → x ∈ c[ w ∷ [] ] -- x ∈ c[ FV (N [ v ≔ N ]) ]
+--             from ∈FV-N = {!   !}
+-- lem-1-2-5-b-i {x} {v} {N} (Var w) v≢x | no ¬p = equivalence id id
+-- lem-1-2-5-b-i {x} {v} {N} (App P Q) v≢x = equivalence to {!   !}
+--     where   to : c[ union (FV P) (FV Q) ] ⊆ c[ union (FV (P [ v ≔ N ])) (FV (Q [ v ≔ N ])) ]
+--             to = map-⊆-union {FV P} {FV Q} {FV (P [ v ≔ N ])} {FV (Q [ v ≔ N ])} (_≢_ v) {!   !} {!   !} {!   !}
+--
+--
+-- lem-1-2-5-b-i (Abs w M) v≢x = {!   !}
 
 -- lem-1-2-5-b-i : ∀ {x v N} M → v ≢ x → (x ∈ FV M) ⇔ (x ∈ FV (M [ v ≔ N ]))
 -- lem-1-2-5-b-i : ∀ {x v N} M → v ≢ x → (x ∈ FV M) ≡ (x ∈ FV (M [ v ≔ N ]))
